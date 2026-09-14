@@ -67,6 +67,7 @@ Referencia        : ${params.refdir}
 Build (ANNOVAR)   : ${params.buildver}
 Base snpEff       : ${params.snpeff_db}
 DeepVariant       : ${params.run_deepvariant}
+Anotación         : ${params.run_annotation}
 Fastq_Screen      : ${params.run_fastqscreen}
 Directorio salida : ${params.out}
 
@@ -187,20 +188,26 @@ Directorio salida : ${params.out}
 
 // === Anotación de variantes =================================
 
-   annovar(postfiltervcf.out.filt_pass_vcf)
-   snpEff(annovar.out.annovar_ch_vcf)
-   snpSift(snpEff.out.snpeff_ch_vcf)
-
-// === VCFs por muestra =======================================
-
    splitVCFs_variantes(postfiltervcf.out.filt_pass_vcf,"variantes")
-   splitVCFs_anotadas(snpSift.out.snpsift_ch_vcf,"anotadas")
+
+   if ("${params.run_annotation}" == "true") {
+
+       annovar(postfiltervcf.out.filt_pass_vcf)
+       snpEff(annovar.out.annovar_ch_vcf)
+       snpSift(snpEff.out.snpeff_ch_vcf)
+
+       splitVCFs_anotadas(snpSift.out.snpsift_ch_vcf,"anotadas")
+
+       annot_reports = snpEff.out.snpeff_ch_txt.collect()
+    } else {
+       annot_reports = Channel.empty()
+    }
 
 // === Summary ================================================
 
     reports_ch = ensemble_vcf.collect()
                     .concat(postfiltervcf.out.filt_pass_vcf.collect())
-                    .concat(snpEff.out.snpeff_ch_txt.collect())
+                    .concat(annot_reports)
                     .collect()
 
     mqc_config = file("${params.mqc_config}")

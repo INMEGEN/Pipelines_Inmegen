@@ -4,16 +4,16 @@ process fastqc {
   publishDir params.out + "/fastqc", mode:'copy'
  
   input: 
-  tuple val(sample), path(R1), path(R2)  
+  tuple val(sample), val(sample_id), val(PU), val(PL), val(LB) , path(R1), path(R2)  
   
   output:
-  path("${sample}/*"), emit: fq_files
+  path("${sample_id}/*"), emit: fq_files
 
   script:
   """
-   mkdir -p ${sample}
+   mkdir -p ${sample_id}
 
-  fastqc --threads ${params.ncrs} -o ${sample} -f fastq -q ${R1} ${R2}
+   fastqc -o ${sample_id} -t ${params.ncrs} -f fastq -q ${R1} ${R2}
   """   
 }
 
