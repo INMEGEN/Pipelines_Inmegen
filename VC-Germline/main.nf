@@ -9,8 +9,8 @@ nextflow.enable.dsl=2
 
 // Processes for this workflow
 // Pre-processing
-include { fastqc as fastqc_raw               } from "../modules/qualitycontrol/fastqc.nf"
-include { fastqc as fastqc_trim              } from "../modules/qualitycontrol/fastqc.nf"
+include { fastqc as fastqc_raw               } from "../modules/VC-Germline/fastqc.nf"
+include { fastqc as fastqc_trim              } from "../modules/VC-Germline/fastqc.nf"
 include { fastqScreen                        } from "../modules/qualitycontrol/fastq_screen.nf"
 include { multiqc                            } from "../modules/qualitycontrol/multiqc.nf"
 include { fastp                              } from "../modules/VC-Germline/fastp.nf"
@@ -101,7 +101,11 @@ Directorio salida : ${params.out}
     fastqc_raw(read_pairs_ch)
 
     if ("${params.run_fastqscreen}" == "true") {
-        fastqScreen(read_pairs_ch,fqs_config)
+        read_pairs_ch
+            .map { sample, sample_id, PU, PL, LB, R1, R2 -> tuple(sample_id, R1, R2) }
+            .set { fqscreen_ch }
+
+        fastqScreen(fqscreen_ch,fqs_config)
     }
 
     fastp(read_pairs_ch,adapters)
