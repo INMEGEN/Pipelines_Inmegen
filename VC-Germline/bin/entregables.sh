@@ -95,13 +95,13 @@ copiar "${DIR_BAM}/*_alineamiento.bam.bai" "${DESTINO}/Alineamientos/"
 
 echo "[2/5] Analisis_de_calidad"
 copiar "${DIR_FQSCREEN}/*"          "${DESTINO}/Analisis_de_calidad/Inspeccion_Secuencias/"
-copiar "${DIR_FASTQC}/*_fastqc.*"   "${DESTINO}/Analisis_de_calidad/Reportes_Calidad/"
-copiar_como "${DIR_MULTIQC}/*fastq*.html" "${DESTINO}/Analisis_de_calidad/Reporte_Calidad.html"
+copiar "${DIR_FASTQC}/*"            "${DESTINO}/Analisis_de_calidad/Reportes_Calidad/"
+copiar_como "${DIR_MULTIQC}/QC_report.html" "${DESTINO}/Analisis_de_calidad/Reporte_Calidad.html"
 
 # === Resultados: reportes ====================================
 
 echo "[3/5] Resultados (reportes)"
-copiar_como "${DIR_MULTIQC}/multiqc_report.html"    "${DESTINO}/Resultados/Reporte_de_Calidad_Analisis.html"
+copiar_como "${DIR_MULTIQC}/QC_report.html"         "${DESTINO}/Resultados/Reporte_de_Calidad_Analisis.html"
 copiar_como "${DIR_VARIANTQC}/*_variantQC.html"     "${DESTINO}/Resultados/Reporte_variantQC.html"
 copiar_como "${DIR_SUMMARY}/Summary_QCmetrics.txt"  "${DESTINO}/Resultados/Resumen_cobertura.txt"
 copiar "${DIR_MULTIQC}/multiqc_data/*"              "${DESTINO}/Resultados/Reportes_de_calidad/"
