@@ -61,7 +61,7 @@ workflow {
 Docker image      : pipelinesinmegen/pipelines_inmegen
 Proyecto          : ${params.project_id}
 Muestras          : ${params.sample_info}
-Tipo de análisis  : ${params.wes ? 'WES' : 'WGS'}
+Tipo de análisis  : ${"${params.wes}" == "true" ? 'WES' : 'WGS'}
 Múltiples lanes   : ${params.multiple_lanes}
 Referencia        : ${params.refdir}
 Build (ANNOVAR)   : ${params.buildver}
