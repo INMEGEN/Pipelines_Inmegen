@@ -9,7 +9,7 @@ Aquí se desarrollan y prueban los flujos de análisis antes de integrarse al re
 | Flujo | Estado | Descripción |
 |---|---|---|
 | [VC-Germline](VC-Germline/) | En desarrollo | Identificación conjunta de variantes germinales (WGS/WES) con GATK y DeepVariant, anotación con ANNOVAR, SnpEff y SnpSift |
-| Metagenomica | Planeado | — |
+| Metagenomica | En desarrollo | — |
 
 Cada flujo tiene su propio `README.md` con las instrucciones de uso y su `RESULTS_INFO.md` con la descripción de los archivos de salida.
 
