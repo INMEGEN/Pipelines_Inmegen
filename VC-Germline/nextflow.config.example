@@ -1,0 +1,99 @@
+// Workflow    : Identificación conjunta de variantes germinales
+// Institution : Instituto Nacional de Medicina Genómica (INMEGEN)
+// Maintainer  : Subdirección de genómica poblacional y subdirección de bioinformática
+// Versión     : 1.2
+
+// === Directorios y nombre del proyecto ======================
+params.outdir         = "/scratch/home/dperez/resultados/2026-I05_CSofia"
+params.sample_info    = "sample_info.tsv"
+params.project_id     = "CSofia"
+params.mqc_config     = "bin/multiqc_config.yaml"
+params.adapters       = "bin/common_adapters.fa"
+
+// === Tipo de datos ===========================================
+params.multiple_lanes = false
+params.wes            = true
+
+// === Referencia (hg38 / GRCh38) ==============================
+params.refdir        = '/STORAGE/references/Broad/hg38/v0/'
+params.refname       = "Homo_sapiens_assembly38.fasta"
+params.interval_list = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2_padded150.interval_list"
+params.intervalname  = "TruSight_Hereditary_Cancer_TargetedRegions_v2_padded150.interval_list"
+params.bed_file      = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2.padded150.bed"
+params.bed_filew     = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2.padded250.bed"
+params.bed_name      = "TruSight_Hereditary_Cancer_TargetedRegions_v2.padded150.bed"
+
+// === Recursos ================================================
+params.ncrs          = 8
+params.batchsize     = 3
+
+// === Filtros clínicos (proceso postfiltervcf) ================
+params.min_gq = 30     // calidad mínima del genotipo
+params.min_dp = 20     // cobertura mínima (clínico >=20, investigación >=10)
+params.ab_min = 0.30   // balance alélico mínimo en heterocigotos
+params.ab_max = 0.70   // balance alélico máximo en heterocigotos
+
+// === Módulos opcionales ======================================
+params.run_deepvariant         = true   // segundo caller
+params.run_fastqscreen         = true   // inspección del origen de las secuencias
+
+// === Fastq_Screen ============================================
+// Directorio con los genomas indexados (bowtie2) que se monta en /fqscreen_db
+params.fqscreen_db      = "/STORAGE/references/FastQ_Screen_Genomes"
+// El archivo .conf DEBE apuntar a /fqscreen_db (ruta dentro del contenedor)
+params.fqscreen_config  = "bin/fastq_screen.conf"
+params.fqscreen_aligner = "bowtie2"
+params.fqscreen_subset  = 100000
+
+// === Bases de datos de anotación =============================
+// ─── ANNOVAR ────────────────────────────────────────────────
+params.buildver   = "hg38"
+params.annovar_db = "/STORAGE/references/Pipelines_INMEGEN/Annovar/humandb"
+
+// Catálogos de ANNOVAR. El número de elementos de protocol y operation
+// DEBE ser el mismo. Verificar que cada base exista en params.annovar_db
+// con el prefijo hg38_ antes de agregarla.
+params.annovar_protocol  = "refGene,refGeneWithVer,ensGene,avsnp151,clinvar_20240917,gnomad312_genome,gnomad211_exome,esp6500siv2_all,dbnsfp47a,dbnsfp47a_interpro,dbscsnv11,intervar_20180118,cosmic70"
+params.annovar_operation = "g,g,g,f,f,f,f,f,f,f,f,f,f"
+
+// ─── snpEff ─────────────────────────────────────────────────
+params.snpeff_db = "GRCh38.99"
+
+// ─── SnpSift ────────────────────────────────────────────────
+// Directorio que se monta en /snpsift_db, los nombres son relativos a él
+params.snpsift_db      = "/STORAGE/references/Pipelines_INMEGEN/SnpSift_db"
+params.snpsift_clinvar = "clinvar.vcf.gz"
+params.snpsift_dbsnp   = "dbSNP_GRCh38.vcf.gz"
+params.clingen_hi      = "ClinGen_haploinsufficiency_gene_GRCh38.bed"
+params.clingen_ts      = "ClinGen_triplosensitivity_gene_GRCh38.bed"
+
+// === Directorios adicionales (NO EDITAR) ======================
+params.out    = params.outdir + '/out'
+params.tmpdir = params.out + '/gatk_temp'
+workDir       = params.outdir + '/nextflow_work_dir'
+
+// Condiciones a ejecutar, toma en cuenta las condiciones de tu servidor o cluster para modificar los parámetros
+// "--cpus" Número máximo de núcleos asignados a cada proceso
+// "queueSize" Número máximo de procesos ejecutados de manera simultánea
+// Nota: por default el flujo de trabajo está limitado a 40 cores (--cpus * queueSize)
+
+docker {
+    enabled      = true
+    temp         = 'auto'
+    runOptions   = "--cpus 8"
+    fixOwnership = true
+}
+
+executor {
+  name      = 'local'
+  queueSize = 10
+}
+
+// ─── Manifest ───────────────────────────────────────────────
+manifest {
+    name            = 'INMEGEN/VC-Germline'
+    version         = '1.2'
+    description     = 'Flujo de indentificación de variantes germinales: GATK 4.6.2 + DeepVariant + ANNOVAR/snpEff/SnpSift'
+    author          = 'Subdirección de Genómica Poblacional and Subdirección de Bioinformática — INMEGEN'
+    nextflowVersion = '>=23.04'
+}

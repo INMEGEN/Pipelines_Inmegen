@@ -1,0 +1,3 @@
+SampleID	Sample_name	RG_PU	RG_PL	RG_LB	R1	R2
+ID_S1	ID_S1	FLOWCELL.1	ILLUMINA	BARCODE	/ruta/absoluta/ID_S1_R1.fastq.gz	/ruta/absoluta/ID_S1_R2.fastq.gz
+ID_S2	ID_S2	FLOWCELL.1	ILLUMINA	BARCODE	/ruta/absoluta/ID_S2_R1.fastq.gz	/ruta/absoluta/ID_S2_R2.fastq.gz

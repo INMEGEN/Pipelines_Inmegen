@@ -1,0 +1,71 @@
+# ─────────────────────────────────────────────────────────────
+# Pipelines INMEGEN — repositorio de desarrollo
+# ─────────────────────────────────────────────────────────────
+
+# === Configuración y datos de cada corrida ==================
+# Son específicos de cada proyecto/servidor, NO deben versionarse.
+# Se versionan únicamente las plantillas *.example
+nextflow.config
+nextflow.config_*
+p_nextflow.config
+*.config.bak
+
+sample_info.tsv
+sample_info_*.tsv
+sample_list.tsv
+
+!nextflow.config.example
+!sample_info.tsv.example
+
+test_config/
+
+# === Logs y archivos de trabajo de Nextflow =================
+.nextflow/
+.nextflow.log
+.nextflow.log.*
+work/
+nextflow_work_dir/
+.nextflow.pid
+
+# Reportes de la corrida (-with-trace / -with-report / -with-timeline)
+trace_*.txt
+report_*.html
+timeline_*.html
+dag_*.html
+dag.dot
+
+*.log
+
+# === Salidas del flujo de trabajo ===========================
+out/
+run_files/
+resultados/
+results/
+entregables/
+
+# Archivos pesados que nunca deben subirse
+*.bam
+*.bai
+*.cram
+*.crai
+*.vcf
+*.vcf.gz
+*.vcf.gz.tbi
+*.g.vcf.gz
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*.bed.gz
+*.interval_list
+
+# === Sistema y editores =====================================
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+__pycache__/
+*.pyc

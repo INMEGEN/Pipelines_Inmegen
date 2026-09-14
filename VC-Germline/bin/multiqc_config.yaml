@@ -1,0 +1,26 @@
+# Título del reporte
+title: "VC-Germline"
+
+description: "Indentificación de variantes germianles"
+
+report_header_info:
+  - Pipeline: "Pipelines Inmegen - [VC-Germline]"
+  - Project: "Comparación Sofía"
+  - Contact E-mail: "serviciosbioinfo@inmegen.edu.mx"
+  - Sitio web: "https://serviciosbio.inmegen.gob.mx/"
+  - GitHub: "https://github.com/INMEGEN/Pipelines_Inmegen/tree/Principal/VC-Germline"
+  - Reference file: "https://console.cloud.google.com/storage/browser/genomics-public-data/resources/broad/hg38/v0/"
+  - Date: "2026-04-27"
+
+show_analysis_paths: False
+show_analysis_time: False
+
+table_sample_merge:
+  "Read 1":
+    - "_R1"
+    - type: regex
+      pattern: "[_.-][rR]?1$"
+  "Read 2":
+    - "_R2"
+    - type: regex
+      pattern: "[_.-][rR]?2$"
