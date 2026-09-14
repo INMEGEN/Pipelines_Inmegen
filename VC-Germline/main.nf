@@ -182,8 +182,8 @@ Directorio salida : ${params.out}
 
 // === QC & filters ===========================================
 
-   variantQC(clinical_vcf)
-   postfiltervcf(clinical_vcf)
+   variantQC(ensemble_vcf)
+   postfiltervcf(ensemble_vcf)
 
 // === Anotación de variantes =================================
 
