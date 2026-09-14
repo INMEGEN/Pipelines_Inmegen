@@ -9,8 +9,8 @@ nextflow.enable.dsl=2
 
 // Processes for this workflow
 // Pre-processing
-include { fastqc as fastqc_raw               } from "../modules/VC-Germline/fastqc.nf"
-include { fastqc as fastqc_trim              } from "../modules/VC-Germline/fastqc.nf"
+include { fastqc as fastqc_raw               } from "../modules/qualitycontrol/fastqc.nf"
+include { fastqc as fastqc_trim              } from "../modules/qualitycontrol/fastqc.nf"
 include { fastqScreen                        } from "../modules/qualitycontrol/fastq_screen.nf"
 include { multiqc                            } from "../modules/qualitycontrol/multiqc.nf"
 include { fastp                              } from "../modules/VC-Germline/fastp.nf"
