@@ -107,4 +107,3 @@ Todo esto está cubierto por el `.gitignore` de la raíz.
 ## Contacto
 
 - Correo: serviciosbioinfo@inmegen.edu.mx
-- Sitio: https://serviciosbio.inmegen.gob.mx/
