@@ -27,4 +27,5 @@ process markDuplicatesSpark {
         --conf spark.ui.enabled=false
 
     rm -r markduplicates/${sample_id}
+    """
 }
