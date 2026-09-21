@@ -159,10 +159,22 @@ Directorio salida : ${params.out}
 
    genomicsDBimport(hc_out, hc_idx, "${params.project_id}", interval_list)
 
-   genotypeGVCFs(genomicsDBimport.out.genomics_db)
-   selectVariants(genotypeGVCFs.out.gvcfs_out)
+   splitIntervals(interval_list)
+
+   gdb_x_intervals = genomicsDBimport.out.genomics_db
+       .combine(splitIntervals.out.intervals.flatten())
+
+   genotypeGVCFs(gdb_x_intervals)
+
+   shards_agrupados = genotypeGVCFs.out.shard_vcf.groupTuple()
+
+   gatherVcfs(shards_agrupados)
+
+   selectVariants(gatherVcfs.out.gvcfs_out)
+
    vqsrsnps(selectVariants.out.snps_ch)
    vqsrindels(selectVariants.out.indels_ch)
+
    joinvcfs(vqsrsnps.out.snps_filt_ch,vqsrindels.out.indels_filt_ch)
 
 // === DeepVariant + GLnexus + Ensemble =======================
