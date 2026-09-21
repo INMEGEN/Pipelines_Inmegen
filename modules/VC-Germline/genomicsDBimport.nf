@@ -1,7 +1,10 @@
 process genomicsDBimport {
+    tag "${project_id}"
     cache 'lenient'
     container 'pipelinesinmegen/pipelines_inmegen:public2'
     publishDir params.out + "/genomicsdb", mode:'copy'
+    cpus 4
+    memory '40 GB'
 
     input:
     path(gvcf_files)
@@ -14,7 +17,10 @@ process genomicsDBimport {
 
     script:
 
-    def merge_intervals = params.wes == "true" ? "--merge-input-intervals" : ""
+    // params.wes se interpola para que la comparacion funcione con booleano o string.
+    // --reader-threads y --max-num-intervals-to-import-in-parallel son MULTIPLICATIVOS.
+    def merge_intervals = "${params.wes}" == "true" ? "--merge-input-intervals" : ""
+    def xmx = task.memory ? (task.memory.toGiga() * 0.8) as int : 32
 
     """
     for f in *.g.vcf.gz; do
@@ -24,16 +30,16 @@ process genomicsDBimport {
 
     mkdir -p genomicsdb/tmp
 
-    gatk --java-options "-Xms32g -Xmx32g" GenomicsDBImport \
-       --genomicsdb-workspace-path ${project_id}_database \
-       --batch-size ${params.batchsize} \
-       --sample-name-map cohort.sample_map \
-       --interval-merging-rule ALL \
-       -L "${interval_list}" \
-       $merge_intervals \
-       --tmp-dir genomicsdb/tmp \
-       --reader-threads ${params.ncrs} \
-       --max-num-intervals-to-import-in-parallel ${params.ncrs}
+    gatk --java-options "-Xms${xmx}g -Xmx${xmx}g -XX:ParallelGCThreads=2" GenomicsDBImport \\
+       --genomicsdb-workspace-path ${project_id}_database \\
+       --batch-size ${params.batchsize} \\
+       --sample-name-map cohort.sample_map \\
+       --interval-merging-rule ALL \\
+       -L "${interval_list}" \\
+       ${merge_intervals} \\
+       --tmp-dir genomicsdb/tmp \\
+       --reader-threads ${task.cpus} \\
+       --max-num-intervals-to-import-in-parallel 1
 
     rm -r genomicsdb/tmp
     """
