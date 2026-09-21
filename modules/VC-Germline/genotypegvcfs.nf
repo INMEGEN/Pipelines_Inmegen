@@ -1,24 +1,25 @@
 process genotypeGVCFs {
+    tag "${interval.simpleName}"
     cache 'lenient'
     containerOptions "-v ${params.refdir}:/ref"
     container 'pipelinesinmegen/pipelines_inmegen:public2'
-    publishDir params.out + "/raw_vcfs", mode:'copy'
     cpus 2
-    memory '90 GB'    
+    memory '12 GB'
 
     input:
-    tuple val(project_id), path(database)
+    tuple val(project_id), path(database), path(interval)
 
     output:
-    tuple val(project_id), path("${project_id}_raw_variants.vcf.gz"), path("${project_id}_raw_variants.vcf.gz.tbi"), emit: gvcfs_out
+    tuple val(project_id), path("${interval.simpleName}_raw.vcf.gz"), path("${interval.simpleName}_raw.vcf.gz.tbi"), emit: shard_vcf
 
     script:
     """
-    gatk --java-options "-Xmx85g -XX:+UseParallelGC" GenotypeGVCFs \
-     -R /ref/${params.refname} \
-     -V gendb://${database} \
-     --genomicsdb-shared-posixfs-optimizations true \
-     -O ${project_id}_raw_variants.vcf.gz 
+    gatk --java-options "-Xmx10g -XX:ParallelGCThreads=2" GenotypeGVCFs \\
+        -R /ref/${params.refname} \\
+        -V gendb://${database} \\
+        -L ${interval} \\
+        --genomicsdb-shared-posixfs-optimizations true \\
+        -O ${interval.simpleName}_raw.vcf.gz
     """
 }
 
