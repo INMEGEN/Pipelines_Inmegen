@@ -4,6 +4,8 @@ process bqsr {
     container 'pipelinesinmegen/pipelines_inmegen:public2'
     containerOptions "-v ${params.refdir}:/ref"
     publishDir params.out + "/bqsr", mode:'symlink'
+    cpus 2
+    memory '16 GB'
 
     input:
     tuple val(sample), path(bam), path(bam_idx)    
@@ -14,10 +16,12 @@ process bqsr {
     path("${sample}_recalibrated.bai")
 
     script:
+    def xmx = task.memory ? (task.memory.toGiga() * 0.75) as int : 12
+    def jopts = "-Xmx${xmx}g -XX:ParallelGCThreads=2"
     """
     mkdir -p tmp/bqsr/${sample}
 
-    gatk BaseRecalibrator \
+    gatk --java-options "${jopts}" BaseRecalibrator \
     -I ${bam} \
     -R /ref/${params.refname} \
     --known-sites /ref/1000G_phase1.snps.high_confidence.hg38.vcf.gz \
@@ -27,14 +31,14 @@ process bqsr {
     -O ${sample}_recalibration_data.table \
     --tmp-dir tmp/bqsr/${sample}
 
-    gatk ApplyBQSR \
+    gatk --java-options "${jopts}" ApplyBQSR \
     -R /ref/${params.refname} \
     -I ${bam} \
     -bqsr ${sample}_recalibration_data.table \
     -O ${sample}_recalibrated.bam \
     --tmp-dir tmp/bqsr/${sample}
 
-    gatk BaseRecalibrator \
+    gatk --java-options "${jopts}" BaseRecalibrator \
     -R /ref/${params.refname} \
     -I ${sample}_recalibrated.bam \
     --known-sites /ref/1000G_phase1.snps.high_confidence.hg38.vcf.gz \
