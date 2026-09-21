@@ -14,8 +14,6 @@ process variantQC {
    tuple val(project_id), path("variant_stats/${project_id}_variantQC.html"), emit: summary_QC
 
    script:
-   // El contenedor lo administra Nextflow (directiva container), NO un 'docker run'
-   // dentro del script: asi hereda docker.runOptions, el cpuset y la limpieza al abortar.
    def xmx = task.memory ? (task.memory.toGiga() * 0.8) as int : 12
    """
    mkdir -p variant_stats
