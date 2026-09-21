@@ -1,7 +1,10 @@
 process metricswes {
+    tag "${sample_id}"
     cache 'lenient'
     container 'pipelinesinmegen/pipelines_inmegen:public2'
     publishDir params.out + "/metrics", mode: 'copy'
+    cpus 4
+    memory '12 GB'
 
     input:
     tuple val(sample_id), path(input_bam), path(bam_idx)
@@ -25,7 +28,7 @@ process metricswes {
     ontarget2=\$(awk "BEGIN {x=\$totalcounts; if(x==0) print 0; else print \$onbedcounts2/x}")
     ontargetp2=\$(awk "BEGIN {x=\$ontarget2; y=100; print x*y}")
 
-    mosdepth -t ${params.ncrs} -b ${bed_file} --thresholds 0,1 ${sample_id} ${input_bam}
+    mosdepth -t ${task.cpus} -b ${bed_file} --thresholds 0,1 ${sample_id} ${input_bam}
 
     zcat ${sample_id}.thresholds.bed.gz | awk '{print \$(NF-1)"\\t"\$NF}' > ${sample_id}_thresholds.txt
 
