@@ -10,7 +10,7 @@ if [ -z "$path" ]; then
 fi
 
 ## Ejecutar nextflow
-nextflow run main.nf -resume -with-trace trace_VCG.txt -with-report report_VCG.html -with-timeline timeline_VCG.html
+nextflow run main.nf -resume
 
 ## Detener si nextflow falló
 if [ $? -ne 0 ]; then
@@ -29,7 +29,7 @@ cp main.nf nextflow.config sample_info.tsv $path/run_files
 cp -r bin $path/run_files
 
 ## Mover los reportes de nextflow a una carpeta en el directrio de salida de nextflow
-mv trace_VCG.txt timeline_VCG.html report_VCG.html $path/run_files
+mv trace_VCG*.txt timeline_VCG*.html report_VCG*.html $path/run_files
 
 echo -e "Archivos y reportes del flujo de trabajo copiados a $path/run_files \n"
 
