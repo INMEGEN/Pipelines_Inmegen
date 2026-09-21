@@ -1,46 +1,52 @@
 // Workflow    : Identificación conjunta de variantes germinales
 // Institution : Instituto Nacional de Medicina Genómica (INMEGEN)
 // Maintainer  : Subdirección de genómica poblacional y subdirección de bioinformática
-// Versión     : 1.2
+// Versión     : 1.3
 
 // === Directorios y nombre del proyecto ======================
-params.outdir         = "/scratch/home/dperez/resultados/2026-I05_CSofia"
+params.outdir         = "/scratch/home/usuario/resultados/2026-XXX_Proyecto"
 params.sample_info    = "sample_info.tsv"
-params.project_id     = "CSofia"
+params.project_id     = "2026-XXX"
 params.mqc_config     = "bin/multiqc_config.yaml"
 params.adapters       = "bin/common_adapters.fa"
 
 // === Tipo de datos ===========================================
-params.multiple_lanes = false
-params.wes            = true
+// IMPORTANTE: booleanos SIN comillas. Un string "false" es "verdadero" en Groovy.
+params.multiple_lanes = true
+params.wes            = false
 
 // === Referencia (hg38 / GRCh38) ==============================
-params.refdir        = '/STORAGE/references/Broad/hg38/v0/'
+params.refdir        = '/STORAGE/references/Broad/hg38/'
 params.refname       = "Homo_sapiens_assembly38.fasta"
-params.interval_list = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2_padded150.interval_list"
-params.intervalname  = "TruSight_Hereditary_Cancer_TargetedRegions_v2_padded150.interval_list"
-params.bed_file      = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2.padded150.bed"
-params.bed_filew     = "/scratch/home/dperez/data/bed_hg38/TruSight_Hereditary_Cancer_TargetedRegions_v2.padded250.bed"
-params.bed_name      = "TruSight_Hereditary_Cancer_TargetedRegions_v2.padded150.bed"
+params.interval_list = "/STORAGE/references/Broad/hg38/wgs_calling_regions.hg38.interval_list"
+params.intervalname  = "wgs_calling_regions.hg38.interval_list"
 
-// === Recursos ================================================
-params.ncrs          = 8
-params.batchsize     = 3
+// En WGS no hay kit de captura, pero el proceso deepVariant recibe el BED como
+// input: debe apuntar a un archivo que EXISTA aunque no se use (con
+// params.wes = false el módulo NO agrega la opción --regions).
+params.bed_file      = "/STORAGE/references/Broad/hg38/wgs_calling_regions.hg38.bed"
+params.bed_filew     = "/STORAGE/references/Broad/hg38/wgs_calling_regions.hg38.bed"
+params.bed_name      = "wgs_calling_regions.hg38.bed"
+
+// === Joint genotyping ========================================
+params.batchsize     = 5    // GenomicsDBImport --batch-size
+params.scatter_count = 48   // nº de intervalos para el scatter de GenotypeGVCFs
 
 // === Filtros clínicos (proceso postfiltervcf) ================
 params.min_gq = 30     // calidad mínima del genotipo
-params.min_dp = 20     // cobertura mínima (clínico >=20, investigación >=10)
+params.min_dp = 10     // cobertura mínima (clínico >=20, investigación >=10)
 params.ab_min = 0.30   // balance alélico mínimo en heterocigotos
 params.ab_max = 0.70   // balance alélico máximo en heterocigotos
 
 // === Módulos opcionales ======================================
-params.run_deepvariant         = true   // segundo caller
-params.run_fastqscreen         = true   // inspección del origen de las secuencias
+params.run_deepvariant  = true    // segundo caller
+params.run_fastqscreen  = false   // pasar a true cuando existan los genomas
+params.run_annotation   = false   // pasar a true cuando existan las bases de ANNOVAR/snpEff/SnpSift
 
 // === Fastq_Screen ============================================
 // Directorio con los genomas indexados (bowtie2) que se monta en /fqscreen_db
-params.fqscreen_db      = "/STORAGE/references/FastQ_Screen_Genomes"
 // El archivo .conf DEBE apuntar a /fqscreen_db (ruta dentro del contenedor)
+params.fqscreen_db      = "/STORAGE/references/FastQ_Screen_Genomes"
 params.fqscreen_config  = "bin/fastq_screen.conf"
 params.fqscreen_aligner = "bowtie2"
 params.fqscreen_subset  = 100000
@@ -50,9 +56,8 @@ params.fqscreen_subset  = 100000
 params.buildver   = "hg38"
 params.annovar_db = "/STORAGE/references/Pipelines_INMEGEN/Annovar/humandb"
 
-// Catálogos de ANNOVAR. El número de elementos de protocol y operation
-// DEBE ser el mismo. Verificar que cada base exista en params.annovar_db
-// con el prefijo hg38_ antes de agregarla.
+// El número de elementos de protocol y operation DEBE ser el mismo.
+// Verificar que cada base exista en params.annovar_db con el prefijo hg38_
 params.annovar_protocol  = "refGene,refGeneWithVer,ensGene,avsnp151,clinvar_20240917,gnomad312_genome,gnomad211_exome,esp6500siv2_all,dbnsfp47a,dbnsfp47a_interpro,dbscsnv11,intervar_20180118,cosmic70"
 params.annovar_operation = "g,g,g,f,f,f,f,f,f,f,f,f,f"
 
@@ -72,28 +77,102 @@ params.out    = params.outdir + '/out'
 params.tmpdir = params.out + '/gatk_temp'
 workDir       = params.outdir + '/nextflow_work_dir'
 
-// Condiciones a ejecutar, toma en cuenta las condiciones de tu servidor o cluster para modificar los parámetros
-// "--cpus" Número máximo de núcleos asignados a cada proceso
-// "queueSize" Número máximo de procesos ejecutados de manera simultánea
-// Nota: por default el flujo de trabajo está limitado a 40 cores (--cpus * queueSize)
+// =============================================================
+// PRESUPUESTO DE RECURSOS
+// =============================================================
+// Ajustar a las condiciones del servidor. Las cuatro capas:
+//
+//   --cpuset-cpus    cores a los que se confina TODO el flujo. A diferencia de
+//                    --cpus, SÍ es visible dentro del contenedor (nproc), así que
+//                    las herramientas que autodetectan se dimensionan contra él.
+//   --cpus           tope duro por contenedor. Debe igualar el mayor process.cpus.
+//   executor.cpus /  presupuesto global que Nextflow reparte entre tareas según
+//   executor.memory  las directivas cpus/memory de cada proceso.
+//   JAVA_TOOL_OPTIONS  limita lo que cada JVM cree que hay disponible. Sin esto,
+//                    cada proceso GATK crea ~8+(N-8)*5/8 hilos SOLO de GC.
+//
+// Ejemplo para un nodo de 104 CPUs lógicos / 52 cores físicos (2 sockets con HT),
+// usando la mitad: 48 cores físicos balanceados entre ambos sockets.
+// Verificar la topología antes de copiar:  lscpu -e=CPU,CORE,SOCKET
 
 docker {
     enabled      = true
     temp         = 'auto'
-    runOptions   = "--cpus 8"
     fixOwnership = true
+    runOptions   = "--cpuset-cpus 0-23,26-49 --cpus 8 --cpuset-mems 0-1"
+    envWhitelist = 'JAVA_TOOL_OPTIONS,OMP_NUM_THREADS,MKL_NUM_THREADS,OPENBLAS_NUM_THREADS'
+}
+
+env {
+    JAVA_TOOL_OPTIONS    = '-XX:ActiveProcessorCount=6'
+    OMP_NUM_THREADS      = '6'
+    MKL_NUM_THREADS      = '6'
+    OPENBLAS_NUM_THREADS = '6'
 }
 
 executor {
-  name      = 'local'
-  queueSize = 10
+    name      = 'local'
+    queueSize = 12
+    cpus      = 48
+    memory    = '280 GB'
+}
+
+process {
+    // Defaults: evitan que task.memory llegue null a los módulos.
+    cpus   = 1
+    memory = '4 GB'
+
+    withName: 'fastqc_raw|fastqc_trim'            { cpus = 2; memory = '4 GB'  }
+    withName: fastp                               { cpus = 4; memory = '8 GB'  }
+    withName: fastqScreen                         { cpus = 6; memory = '16 GB' }
+    withName: align                               { cpus = 8; memory = '20 GB' }
+    withName: mergeBam                            { cpus = 4; memory = '12 GB' }
+    withName: markDuplicatesSpark                 { cpus = 8; memory = '48 GB' }
+    withName: 'metricswgs|metricswes|getMetrics'  { cpus = 4; memory = '12 GB' }
+    withName: bqsr                                { cpus = 2; memory = '16 GB' }
+    withName: haplotypeCallerERC                  { cpus = 4; memory = '16 GB' }
+    withName: deepVariant                         { cpus = 8; memory = '32 GB' }
+    withName: genomicsDBimport                    { cpus = 4; memory = '40 GB' }
+    withName: splitIntervals                      { cpus = 2; memory = '8 GB'  }
+    withName: genotypeGVCFs                       { cpus = 2; memory = '12 GB' }
+    withName: gatherVcfs                          { cpus = 2; memory = '16 GB' }
+    withName: glnexus                             { cpus = 8; memory = '64 GB' }
+    withName: variantQC                           { cpus = 4; memory = '16 GB' }
+    withName: annovar                             { cpus = 8; memory = '24 GB' }
+    withName: 'selectVariants|vqsrsnps|vqsrindels|joinvcfs|ensembleVariants|postfiltervcf' { cpus = 2; memory = '16 GB' }
+    withName: 'snpEff|snpSift'                    { cpus = 2; memory = '16 GB' }
+    withName: multiqc                             { cpus = 1; memory = '8 GB'  }
+}
+
+// === Reportes ================================================
+// overwrite = true evita el error al reanudar con -resume.
+// NO usar -with-trace / -with-report / -with-timeline en la línea de comandos:
+// esos flags no heredan overwrite y hacen fallar el renderizado.
+
+trace {
+    enabled   = true
+    file      = 'trace_VCG.txt'
+    overwrite = true
+    fields    = 'task_id,name,status,exit,cpus,%cpu,memory,peak_rss,realtime,workdir'
+}
+
+report {
+    enabled   = true
+    file      = 'report_VCG.html'
+    overwrite = true
+}
+
+timeline {
+    enabled   = true
+    file      = 'timeline_VCG.html'
+    overwrite = true
 }
 
 // ─── Manifest ───────────────────────────────────────────────
 manifest {
     name            = 'INMEGEN/VC-Germline'
-    version         = '1.2'
-    description     = 'Flujo de indentificación de variantes germinales: GATK 4.6.2 + DeepVariant + ANNOVAR/snpEff/SnpSift'
+    version         = '1.3'
+    description     = 'Flujo de identificación de variantes germinales: GATK 4.6.2 + DeepVariant + ANNOVAR/snpEff/SnpSift'
     author          = 'Subdirección de Genómica Poblacional and Subdirección de Bioinformática — INMEGEN'
     nextflowVersion = '>=23.04'
 }
