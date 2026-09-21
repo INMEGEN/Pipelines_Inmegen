@@ -33,6 +33,8 @@ include { glnexus                            } from "../modules/VC-Germline/glne
 include { haplotypeCallerERC                 } from "../modules/VC-Germline/haplotypecaller_erc.nf"
 include { genomicsDBimport                   } from "../modules/VC-Germline/genomicsDBimport.nf"
 include { genotypeGVCFs                      } from "../modules/VC-Germline/genotypegvcfs.nf"
+include { splitIntervals                     } from "../modules/VC-Germline/splitintervals.nf"
+include { gatherVcfs                         } from "../modules/VC-Germline/gathervcfs.nf"
 include { selectVariants                     } from "../modules/VC-Germline/selectvariants.nf"
 include { vqsrsnps                           } from "../modules/VC-Germline/vqsr_snps.nf"
 include { vqsrindels                         } from "../modules/VC-Germline/vqsr_indels.nf"
