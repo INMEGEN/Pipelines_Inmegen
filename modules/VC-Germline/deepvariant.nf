@@ -1,8 +1,11 @@
 process deepVariant {
+    tag "${sample}"
     cache 'lenient'
     container 'google/deepvariant:1.6.1'
     containerOptions "-v ${params.refdir}:/ref -e OMP_NUM_THREADS=${task.cpus} -e TF_NUM_INTRAOP_THREADS=${task.cpus} -e TF_NUM_INTEROP_THREADS=1"
     publishDir params.out + "/deepvariant_gvcfs", mode: 'copy'
+    cpus 8
+    memory '32 GB'
 
     input:
     tuple val(sample), path(input_bam), path(input_bai)
@@ -13,6 +16,8 @@ process deepVariant {
     tuple val(sample), path("${sample}_dv.vcf.gz"),   path("${sample}_dv.vcf.gz.tbi"),   emit: dv_vcf_out
 
     script:
+    // call_variants usa TensorFlow, que dimensiona sus pools con el numero de CPU
+    // visibles y NO respeta --num_shards: por eso las variables TF_/OMP_ arriba.
     def is_wes      = "${params.wes}" == "true"
     def model       = is_wes ? "WES" : "WGS"
     def regions_opt = is_wes ? "--regions ${bed_file}" : ""
