@@ -3,6 +3,8 @@ process mergeBam {
    cache 'lenient'
    container 'pipelinesinmegen/pipelines_inmegen:public2'
    publishDir params.out + "/merged_bam", mode:'symlink'
+   cpus 4
+   memory '12 GB'
 
    input:
    tuple val(sample_id), path(bam_files)
@@ -12,6 +14,6 @@ process mergeBam {
 
    script:
    """
-   samtools merge -@ ${params.ncrs} -f ${sample_id}_merged.bam ${bam_files}
+   samtools merge -@ ${task.cpus} -f ${sample_id}_merged.bam ${bam_files}
    """
 }
