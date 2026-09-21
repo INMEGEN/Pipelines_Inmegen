@@ -1,20 +1,21 @@
-process fastp {
+process fastqc {
+  tag "${sample_id}"
   cache 'lenient'
   container 'pipelinesinmegen/pipelines_inmegen:public'
-  publishDir params.out + "/trimmed_files", mode: 'symlink'
+  publishDir params.out + "/fastqc", mode:'copy'
+  cpus 2
+  memory '4 GB'
 
   input:
-  tuple val(sample), val(sample_id), val(PU), val(PL), val(LB), path(R1), path(R2)
-  path(adapters)
+  tuple val(sample), val(sample_id), val(PU), val(PL), val(LB) , path(R1), path(R2)
 
   output:
-  tuple val(sample), val(sample_id), val(PU), val(PL), val(LB), path("${sample_id}_R1.trimmed.fq.gz"), path("${sample_id}_R2.trimmed.fq.gz"), emit: trim_fq
-  tuple path("${sample_id}_fastp.html"), path("${sample_id}_fastp.json")
+  path("${sample_id}/*"), emit: fq_files
 
   script:
   """
-  fastp --in1 ${R1} --in2 ${R2} --out1 ${sample_id}_R1.trimmed.fq.gz --out2 ${sample_id}_R2.trimmed.fq.gz \
-         --adapter_fasta ${adapters} --detect_adapter_for_pe -g --poly_g_min_len 9 -q 20 -l 50 \
-         -h ${sample_id}_fastp.html -j ${sample_id}_fastp.json
+   mkdir -p ${sample_id}
+
+   fastqc -o ${sample_id} -t ${task.cpus} -f fastq -q ${R1} ${R2}
   """
 }
